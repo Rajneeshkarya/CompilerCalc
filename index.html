@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compiler Simulation Tool</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Compiler Simulation Tool</h1>
+
+    <!-- Code Input Section -->
+    <section class="code-input">
+      <label for="sourceCode">Enter your code:</label>
+      <textarea id="sourceCode" rows="10" placeholder="e.g., int x = 5;"></textarea>
+      <button id="submitBtn">Submit</button>
+      <span id="loadingIndicator" class="hidden">Loading...</span>
+    </section>
+
+    <!-- Result Sections -->
+    <section class="results">
+      <div class="result-section">
+        <h2>Lexical Analysis</h2>
+        <pre id="lexicalOutput" class="output-box"></pre>
+      </div>
+      <div class="result-section">
+        <h2>Parse Tree</h2>
+        <pre id="parseTreeOutput" class="output-box"></pre>
+      </div>
+      <div class="result-section">
+        <h2>Output</h2>
+        <pre id="finalOutput" class="output-box"></pre>
+      </div>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
