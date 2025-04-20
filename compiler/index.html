@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Parse Tree Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            overflow: hidden;
+        }
+        .node circle {
+            fill: #69b3a2;
+            stroke: steelblue;
+            stroke-width: 2px;
+        }
+        .node text {
+            font: 14px sans-serif;
+        }
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 2px;
+        }
+    </style>
+</head>
+<body>
+<svg width="100%" height="100%"></svg>
+
+<script>
+    // Set up canvas size
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const svg = d3.select("svg")
+        .attr("viewBox", [0, 0, width, height])
+        .call(d3.zoom().on("zoom", function (event) {
+            svg.attr("transform", event.transform);
+        }))
+        .append("g");
+
+    // Load the JSON
+    d3.json("parse_tree.json").then(function(treeData) {
+        const root = d3.hierarchy(treeData, d => {
+            let children = [];
+            if (d.left) children.push(d.left);
+            if (d.right) children.push(d.right);
+            return children.length ? children : null;
+        });
+
+        const treeLayout = d3.tree().size([height - 100, width - 200]);
+        treeLayout(root);
+
+        // Draw links
+        svg.selectAll(".link")
+            .data(root.links())
+            .join("path")
+            .attr("class", "link")
+            .attr("d", d3.linkHorizontal()
+                .x(d => d.y)
+                .y(d => d.x)
+            );
+
+        // Draw nodes
+        const node = svg.selectAll(".node")
+            .data(root.descendants())
+            .join("g")
+            .attr("class", "node")
+            .attr("transform", d => `translate(${d.y},${d.x})`);
+
+        node.append("circle")
+            .attr("r", 20);
+
+        node.append("text")
+            .attr("dy", ".35em")
+            .attr("x", d => d.children ? -25 : 25)
+            .style("text-anchor", d => d.children ? "end" : "start")
+            .text(d => d.data.value);
+    });
+</script>
+</body>
+</html>
