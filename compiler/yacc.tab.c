@@ -74,30 +74,28 @@
 #include <string.h>
 #include <json-c/json.h>
 #include <ctype.h>
-#include "lex.yy.h"
 
-void yyerror(const char *s);
-int yylex();
-
+// Define the Node structure before using it
 typedef struct Node {
     char* value;
     struct Node* left;
     struct Node* right;
 } Node;
 
-Node* createNode(char* value, Node* left, Node* right) {
-    Node* node = (Node*)malloc(sizeof(Node));
-    node->value = strdup(value);
-    node->left = left;
-    node->right = right;
-    return node;
-}
-
+// Declare function used in parser
+Node* createNode(char* value, Node* left, Node* right);
 int evaluate(Node* node);
 struct json_object* nodeToJson(Node* root);
 
+// Declare external variable
+extern struct json_object* tokens_array;
 
-#line 101 "yacc.tab.c"
+// Needed for Bison & Flex interaction
+int yylex(void);
+void yyerror(const char *s);
+
+
+#line 99 "yacc.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -528,7 +526,7 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    49,    49,    65,    66,    67,    68,    69,    70,    71
+       0,    50,    50,    66,    67,    68,    69,    70,    71,    72
 };
 #endif
 
@@ -1093,67 +1091,67 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* stmt: ID ASSIGN expr SEMI  */
-#line 50 "yacc.y"
+#line 51 "yacc.y"
     {
         (yyval.node) = createNode("=", createNode((yyvsp[-3].id), NULL, NULL), (yyvsp[-1].node));
 
-        // 1. Parse Tree JSON
+        // 1. Generate Parse Tree JSON
         struct json_object* tree = nodeToJson((yyval.node));
         json_object_to_file("parse_tree.json", tree);
 
-        // 2. Arithmetic Evaluation Output
+        // 2. Evaluate Arithmetic
         int result = evaluate((yyvsp[-1].node));
         struct json_object* result_obj = json_object_new_object();
         json_object_object_add(result_obj, "result", json_object_new_int(result));
         json_object_to_file("output.json", result_obj);
     }
-#line 1111 "yacc.tab.c"
+#line 1109 "yacc.tab.c"
     break;
 
   case 3: /* expr: expr PLUS expr  */
-#line 65 "yacc.y"
-                       { (yyval.node) = createNode("+", (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1117 "yacc.tab.c"
+#line 66 "yacc.y"
+                         { (yyval.node) = createNode("+", (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1115 "yacc.tab.c"
     break;
 
   case 4: /* expr: expr MINUS expr  */
-#line 66 "yacc.y"
-                       { (yyval.node) = createNode("-", (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1123 "yacc.tab.c"
+#line 67 "yacc.y"
+                         { (yyval.node) = createNode("-", (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1121 "yacc.tab.c"
     break;
 
   case 5: /* expr: expr MUL expr  */
-#line 67 "yacc.y"
-                       { (yyval.node) = createNode("*", (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1129 "yacc.tab.c"
+#line 68 "yacc.y"
+                         { (yyval.node) = createNode("*", (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1127 "yacc.tab.c"
     break;
 
   case 6: /* expr: expr DIV expr  */
-#line 68 "yacc.y"
-                       { (yyval.node) = createNode("/", (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1135 "yacc.tab.c"
+#line 69 "yacc.y"
+                         { (yyval.node) = createNode("/", (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1133 "yacc.tab.c"
     break;
 
   case 7: /* expr: NUMBER  */
-#line 69 "yacc.y"
-                       { char buf[16]; sprintf(buf, "%d", (yyvsp[0].num)); (yyval.node) = createNode(buf, NULL, NULL); }
-#line 1141 "yacc.tab.c"
+#line 70 "yacc.y"
+                         { char buf[16]; sprintf(buf, "%d", (yyvsp[0].num)); (yyval.node) = createNode(buf, NULL, NULL); }
+#line 1139 "yacc.tab.c"
     break;
 
   case 8: /* expr: ID  */
-#line 70 "yacc.y"
-                       { (yyval.node) = createNode((yyvsp[0].id), NULL, NULL); }
-#line 1147 "yacc.tab.c"
+#line 71 "yacc.y"
+                         { (yyval.node) = createNode((yyvsp[0].id), NULL, NULL); }
+#line 1145 "yacc.tab.c"
     break;
 
   case 9: /* expr: LPAREN expr RPAREN  */
-#line 71 "yacc.y"
+#line 72 "yacc.y"
                          { (yyval.node) = (yyvsp[-1].node); }
-#line 1153 "yacc.tab.c"
+#line 1151 "yacc.tab.c"
     break;
 
 
-#line 1157 "yacc.tab.c"
+#line 1155 "yacc.tab.c"
 
       default: break;
     }
@@ -1346,58 +1344,43 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 74 "yacc.y"
+#line 75 "yacc.y"
 
+
+// Function definitions
+
+Node* createNode(char* value, Node* left, Node* right) {
+    Node* node = (Node*)malloc(sizeof(Node));
+    node->value = strdup(value);
+    node->left = left;
+    node->right = right;
+    return node;
+}
 
 int evaluate(Node* node) {
     if (!node) return 0;
-
-    if (strcmp(node->value, "+") == 0)
-        return evaluate(node->left) + evaluate(node->right);
-    else if (strcmp(node->value, "-") == 0)
-        return evaluate(node->left) - evaluate(node->right);
-    else if (strcmp(node->value, "*") == 0)
-        return evaluate(node->left) * evaluate(node->right);
-    else if (strcmp(node->value, "/") == 0)
-        return evaluate(node->left) / evaluate(node->right);
-    else if (isdigit(node->value[0]))
-        return atoi(node->value);
-
-    return 0;  // return 0 for identifiers (no symbol table)
+    if (strcmp(node->value, "+") == 0) return evaluate(node->left) + evaluate(node->right);
+    if (strcmp(node->value, "-") == 0) return evaluate(node->left) - evaluate(node->right);
+    if (strcmp(node->value, "*") == 0) return evaluate(node->left) * evaluate(node->right);
+    if (strcmp(node->value, "/") == 0) return evaluate(node->left) / evaluate(node->right);
+    if (isdigit(node->value[0])) return atoi(node->value);
+    return 0;
 }
 
 struct json_object* nodeToJson(Node* root) {
     if (!root) return NULL;
-
     struct json_object* obj = json_object_new_object();
     json_object_object_add(obj, "value", json_object_new_string(root->value));
-
-    if (root->left) {
-        json_object_object_add(obj, "left", nodeToJson(root->left));
-    }
-    if (root->right) {
-        json_object_object_add(obj, "right", nodeToJson(root->right));
-    }
-
+    if (root->left) json_object_object_add(obj, "left", nodeToJson(root->left));
+    if (root->right) json_object_object_add(obj, "right", nodeToJson(root->right));
     return obj;
 }
 
-void yyerror(const char* s) {
-    fprintf(stderr, "Parse error: %s\n", s);
+void yyerror(const char *s) {
+    fprintf(stderr, "Error: %s\n", s);
 }
 
 int main() {
-    int tok;
-    struct json_object *tokens_array = json_object_new_array();
-
-    while ((tok = yylex())) {
-        struct json_object *token_obj = json_object_new_object();
-        json_object_object_add(token_obj, "token_type", json_object_new_int(tok));
-        json_object_object_add(token_obj, "lexeme", json_object_new_string(yytext));
-        json_object_array_add(tokens_array, token_obj);
-    }
-
-    json_object_to_file("tokens.json", tokens_array);
     yyparse();
     return 0;
 }
