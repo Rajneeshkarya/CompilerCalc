@@ -1,5 +1,6 @@
+#line 2 "lex.yy.c"
 
-#line 3 "lex.yy.c"
+#line 4 "lex.yy.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -457,8 +458,8 @@ char *yytext;
 
 extern YYSTYPE yylval;
 struct json_object* tokens_array;  // actual definition (not extern)
-#line 461 "lex.yy.c"
 #line 462 "lex.yy.c"
+#line 463 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -678,7 +679,7 @@ YY_DECL
 #line 15 "lex.l"
 
 
-#line 682 "lex.yy.c"
+#line 683 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -807,7 +808,7 @@ YY_RULE_SETUP
 #line 40 "lex.l"
 ECHO;
 	YY_BREAK
-#line 811 "lex.yy.c"
+#line 812 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 

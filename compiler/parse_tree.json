@@ -1,1 +1,33 @@
-{"value":"=","left":{"value":"average"},"right":{"value":"\/","left":{"value":"+","left":{"value":"+","left":{"value":"+","left":{"value":"10"},"right":{"value":"2"}},"right":{"value":"3"}},"right":{"value":"4"}},"right":{"value":"4"}}}
+{
+    "value": "=",
+    "left": {
+        "value": "average"
+    },
+    "right": {
+        "value": "\/",
+        "left": {
+            "value": "+",
+            "left": {
+                "value": "+",
+                "left": {
+                    "value": "+",
+                    "left": {
+                        "value": "10"
+                    },
+                    "right": {
+                        "value": "2"
+                    }
+                },
+                "right": {
+                    "value": "3"
+                }
+            },
+            "right": {
+                "value": "4"
+            }
+        },
+        "right": {
+            "value": "4"
+        }
+    }
+}
