@@ -1,16 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Compiler Simulation Tool</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Compiler Simulation Tool with Parse Tree Viewer</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    #parseTreeContainer {
+      position: relative;
+      background-color: #f4f4f4;
+      border: 1px solid #ccc;
+      margin-top: 1rem;
+    }
+
+    #reset {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      font-size: 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 2;
+    }
+
+    #reset:hover {
+      background-color: #3f51b5;
+      color: white;
+      border-color: #3f51b5;
+    }
+
+    svg {
+      width: 100%;
+      height: 500px;
+    }
+
+    .node circle {
+      fill: #4caf50;
+      stroke: #2e7d32;
+      stroke-width: 2px;
+    }
+
+    .node text {
+      font: 14px sans-serif;
+      fill: #333;
+    }
+
+    .link {
+      fill: none;
+      stroke: #999;
+      stroke-width: 2px;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
     <h1>Compiler Simulation Tool</h1>
     <div class="main-content">
-      <!-- Code Input Section -->
       <section class="code-input">
         <label for="sourceCode">Enter your code:</label>
         <textarea id="sourceCode" rows="20" placeholder="e.g., int x = 5;"></textarea>
@@ -20,7 +70,6 @@
         </div>
       </section>
 
-      <!-- Result Sections -->
       <section class="results">
         <div class="result-section">
           <h2>Lexical Analysis</h2>
@@ -28,7 +77,11 @@
         </div>
         <div class="result-section">
           <h2>Parse Tree</h2>
-          <pre id="parseTreeOutput" class="output-box"></pre>
+          <!-- D3 Viewer Embedded -->
+          <div id="parseTreeContainer">
+            <button id="reset">🔄 Reset View</button>
+            <svg></svg>
+          </div>
         </div>
         <div class="result-section">
           <h2>Output</h2>
@@ -37,6 +90,60 @@
       </section>
     </div>
   </div>
+
   <script src="script.js"></script>
+  <script>
+    const svg = d3.select("svg"),
+          g = svg.append("g");
+
+    const zoom = d3.zoom().on("zoom", (event) => {
+      g.attr("transform", event.transform);
+    });
+
+    svg.call(zoom);
+
+    document.getElementById("reset").onclick = () => {
+      svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
+    };
+
+    // Load the parse tree from JSON and draw
+    d3.json("parse_tree.json").then(function(treeData) {
+      const width = document.querySelector("#parseTreeContainer").offsetWidth;
+      const height = 500;
+
+      const root = d3.hierarchy(treeData, d => {
+        let children = [];
+        if (d.left) children.push(d.left);
+        if (d.right) children.push(d.right);
+        return children.length ? children : null;
+      });
+
+      const treeLayout = d3.tree().size([width - 100, height - 100]);
+      treeLayout(root);
+
+      g.selectAll(".link")
+        .data(root.links())
+        .join("path")
+        .attr("class", "link")
+        .attr("d", d3.linkVertical()
+          .x(d => d.x + 50)
+          .y(d => d.y + 50)
+        );
+
+      const node = g.selectAll(".node")
+        .data(root.descendants())
+        .join("g")
+        .attr("class", "node")
+        .attr("transform", d => `translate(${d.x + 50},${d.y + 50})`);
+
+      node.append("circle").attr("r", 20);
+
+      node.append("text")
+        .attr("dy", ".35em")
+        .attr("y", d => d.children ? -30 : 30)
+        .style("text-anchor", "middle")
+        .text(d => d.data.value);
+    });
+  </script>
 </body>
 </html>
