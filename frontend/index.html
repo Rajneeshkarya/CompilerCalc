@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Compiler Simulation Tool with Parse Tree Viewer</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    /* Global Styles */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Two-column layout */
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    @media (min-width: 900px) {
+      .main-content {
+        flex-direction: row;
+      }
+      .left-panel, .right-panel {
+        flex: 1;
+      }
+    }
+
+    /* Code Input & Output on left */
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    .code-input label {
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+    .code-input textarea {
+      font-family: "Courier New", monospace;
+      font-size: 1rem;
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: vertical;
+      min-height: 300px;
+    }
+    .input-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    #submitBtn {
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+    #submitBtn:hover:not(:disabled) {
+      background-color: #218838;
+    }
+    #loadingIndicator { font-style: italic; }
+    .hidden { display: none; }
+
+    /* Results on right */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .result-section h2 {
+      margin-bottom: 0.5rem;
+      font-size: 1.25rem;
+    }
+    .output-box {
+      font-family: "Courier New", monospace;
+      font-size: 0.95rem;
+      background: #f0f0f0;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow-x: auto;
+      min-height: 5rem;
+    }
+
+    /* Parse Tree Viewer Styles */
+    #parseTreeContainer {
+      position: relative;
+      background-color: #f4f4f4;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      height: 400px;
+      overflow: hidden;
+    }
+    #reset {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      font-size: 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 2;
+    }
+    #reset:hover {
+      background-color: #3f51b5;
+      color: #fff;
+      border-color: #3f51b5;
+    }
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+    .node circle {
+      fill: #4caf50;
+      stroke: #2e7d32;
+      stroke-width: 2px;
+    }
+    .node text {
+      font: 14px sans-serif;
+      fill: #333;
+    }
+    .link {
+      fill: none;
+      stroke: #999;
+      stroke-width: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Compiler Simulation Tool</h1>
+    <div class="main-content">
+
+      <!-- LEFT: Code + Output -->
+      <div class="left-panel">
+        <section class="code-input">
+          <label for="sourceCode">Enter your code:</label>
+          <textarea id="sourceCode" placeholder="e.g., int x = 5;"></textarea>
+          <div class="input-actions">
+            <button id="submitBtn">Submit</button>
+            <span id="loadingIndicator" class="hidden">Loading...</span>
+          </div>
+        </section>
+
+        <section class="result-section">
+          <h2>Output</h2>
+          <pre id="finalOutput" class="output-box"></pre>
+        </section>
+      </div>
+
+      <!-- RIGHT: Lexical + Parse Tree -->
+      <div class="right-panel">
+        <section class="result-section">
+          <h2>Lexical Analysis</h2>
+          <pre id="lexicalOutput" class="output-box"></pre>
+        </section>
+        <section class="result-section">
+          <h2>Parse Tree</h2>
+          <div id="parseTreeContainer">
+            <button id="reset">🔄 Reset View</button>
+            <svg></svg>
+          </div>
+        </section>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    const svg = d3.select("svg"), g = svg.append("g");
+    const zoom = d3.zoom().on("zoom", e => g.attr("transform", e.transform));
+    svg.call(zoom);
+    document.getElementById("reset").onclick = () =>
+      svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
+
+    d3.json("parse_tree.json").then(treeData => {
+      const width = document.querySelector("#parseTreeContainer").offsetWidth;
+      const height = 400;
+      const root = d3.hierarchy(treeData, d => {
+        const kids = [];
+        if (d.left)  kids.push(d.left);
+        if (d.right) kids.push(d.right);
+        return kids.length ? kids : null;
+      });
+      d3.tree().size([width-100, height-100])(root);
+      g.selectAll(".link")
+        .data(root.links())
+        .join("path")
+        .attr("class", "link")
+        .attr("d", d3.linkVertical()
+          .x(d=>d.x+50).y(d=>d.y+50)
+        );
+      const node = g.selectAll(".node")
+        .data(root.descendants())
+        .join("g")
+        .attr("class", "node")
+        .attr("transform", d=>translate(${d.x+50},${d.y+50}));
+      node.append("circle").attr("r",20);
+      node.append("text")
+        .attr("dy",".35em")
+        .attr("y", d=>d.children ? -30 : 30)
+        .style("text-anchor","middle")
+        .text(d=>d.data.value);
+    });
+  </script>
+</body>
+</html>
